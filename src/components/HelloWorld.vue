@@ -4,9 +4,16 @@
     <input type="file" @change="uploadSubtitles" accept="application/json" />
     <audio ref="audioPlayer" controls @timeupdate="updateSubtitle"></audio>
 
+    <!-- <div class="subtitles">
+      <p v-for="(line, index) in subtitles.dialog" :key="index" v-html="line.text"></p>
+    </div> -->
+
     <div class="subtitles">
-      <p v-for="(line, index) in subtitles.dialog" :key="index" v-html="highlightText(line.text, index)"></p>
+      <p v-for="(line, index) in subtitles.dialog" :key="index" v-html="line.text"></p>
     </div>
+
+    <p v-html="highlightSubtitle"></p>
+
   </div>
 </template>
 
@@ -15,38 +22,6 @@ import * as JsonClasses from "@/components/Class/JsonObject";
 
 var audioObject = new JsonClasses.AudioClass();
 
-class AudioObserver {
-  constructor(audioElement, startTime, endTime, callback) {
-    this.audioElement = audioElement;
-    this.startTime = startTime;
-    this.endTime = endTime;
-    this.callback = callback;
-    this.isTriggered = false;
-
-    // Attach the timeupdate event listener
-    this.audioElement.addEventListener("timeupdate", this.checkTime.bind(this));
-  }
-
-  checkTime() {
-    const currentTime = this.audioElement.currentTime * 1000; // Convert to milliseconds
-
-    // Check if currentTime is within the range
-    if (currentTime >= this.startTime && currentTime <= this.endTime) {
-      if (!this.isTriggered) {
-        this.callback(); // Trigger the callback
-        this.isTriggered = true; // Ensure it only triggers once
-      }
-    } else {
-      // Reset the flag if outside the range
-      this.isTriggered = false;
-    }
-  }
-
-  // Cleanup the event listener
-  destroy() {
-    this.audioElement.removeEventListener("timeupdate", this.checkTime.bind(this));
-  }
-}
 
 export default {
   data() {
@@ -54,6 +29,7 @@ export default {
       audioSrc: null,
       subtitles: { dialog: [], timestamp: [] },
       activeIndex: -1,
+      displayDialog: {dialog: [], timestamp: [] },
     };
   },
   methods: {
@@ -71,22 +47,11 @@ export default {
         reader.onload = (e) => {
           this.subtitles = JSON.parse(e.target.result);
           this.audioObject = JsonClasses.parseRoot(e.target.result);
-          console.log(this.audioObject);
+          
           this.audioObject.processTimeStamp();
-          console.log("Chào Lan! Mình là James, đến từ Hoa Kỳ. Rất vui được gặp bạn.".length);
-          if (this.subtitles.timestamp.length > 0) {
-            const [start, duration] = this.subtitles.timestamp[0];
-            const end = start + duration; // Calculate end time
-            this.observer = new AudioObserver(
-              this.$refs.audioPlayer,
-              start,
-              end,
-              () => {
-                console.log("Triggered callback for timestamp range:", start, end);
-              }
-            );
-          }
+          console.log(this.subtitles);
         };
+        // this.displayDialog = this.subtitles;
         reader.readAsText(file);
       }
     },
@@ -94,7 +59,7 @@ export default {
 
     updateSubtitle() {
       const currentTime = this.$refs.audioPlayer.currentTime * 1000; // Convert to milliseconds
-
+      var currentWord = "";
       // Loop through the timestamp array
       for (let i = 0; i < this.subtitles.timestamp.length; i++) {
         const [start, duration, string] = this.subtitles.timestamp[i]; // Destructure the timestamp
@@ -103,23 +68,29 @@ export default {
         // Check if currentTime is within the range
         if (currentTime >= start && currentTime <= end) {
           this.activeIndex = i;
-
+          if(currentWord != string ){
+            currentWord = string;
+            console.log(string,currentTime);
+          }
           // Log the string attribute if it exists
-          if (string) {
+          // if (string) {
             // let sum = 0;
             // let tempIdx = 1;
             // for(let a =0; a < this.subtitles.dialog.length; a++){
-            //   sum+= this.subtitles.dialog[a].length;
-            //   if(sum > this.subtitles.timestamp[4]){
-            //     tempIdx = a-1;
+            //   sum += this.subtitles.dialog[a].text.length;
+            //   if(sum >= this.subtitles.timestamp[i][3]){
+            //     tempIdx = a;
+            //     sum -= this.subtitles.dialog[a].text.length;
+            //     break;
             //   }
             // }
-            // this.highlightText(string,tempIdx-sum)
+            // sum-= this.subtitles.dialog[a].text.length;
+            // this.highlightText(tempIdx,this.subtitles.timestamp[i][4]-sum, this.subtitles.timestamp[i][5]);
+            // this.subtitles.dialog[tempIdx] = this.highlightText(tempIdx,this.subtitles.timestamp[i][3]-sum, this.subtitles.timestamp[i][4]);
+            // console.log("Timestamp string:", string);
+            // console.log("render string:", this.highlightText(tempIdx,this.subtitles.timestamp[i][3]-sum, this.subtitles.timestamp[i][4]));
 
-            console.log("Timestamp string:", string);
-
-
-          }
+          // }
           return;
         }
       }
@@ -142,14 +113,26 @@ export default {
       this.$refs.audioPlayer.currentTime = 0;
     },
 
-    highlightText(text, index) {
-      const [startIdx, length] = this.subtitles.timestamp[index] || [null, null];
-      if (startIdx === null || length === null) return text;
+    // highlightText(text, index) {
 
-      const before = text.slice(0, startIdx);
-      const highlight = text.slice(startIdx, startIdx + length);
-      const after = text.slice(startIdx + length);
+    //   const [startIdx, length] = this.subtitles.timestamp[index] || [null, null];
 
+    //   if (startIdx === null || length === null) return text;
+
+    //   const before = text.slice(0, startIdx);
+    //   const highlight = text.slice(startIdx, startIdx + length);
+    //   const after = text.slice(startIdx + length);
+
+    //   return `${before}<span class='highlight'>${highlight}</span>${after}`;
+    // },
+
+
+    highlightText(dialogIdx, startIndex, subStringLength) {
+      let currentWorkingLine = this.subtitles.dialog[dialogIdx].text;
+      if (startIndex === null || subStringLength === null) return currentWorkingLine;
+      const before = currentWorkingLine.slice(0, startIndex-dialogIdx);
+      const highlight = currentWorkingLine.slice(startIndex-dialogIdx, startIndex-dialogIdx + subStringLength);
+      const after = currentWorkingLine.slice(startIndex-dialogIdx + subStringLength);
       return `${before}<span class='highlight'>${highlight}</span>${after}`;
     },
   },
@@ -179,5 +162,6 @@ export default {
 .highlight {
   background-color: yellow;
   font-weight: bold;
+  transition: background-color 0.3s ease;
 }
 </style>

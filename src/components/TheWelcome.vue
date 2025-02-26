@@ -1,94 +1,227 @@
-<script setup lang="ts">
-import WelcomeItem from './WelcomeItem.vue'
-import DocumentationIcon from './icons/IconDocumentation.vue'
-import ToolingIcon from './icons/IconTooling.vue'
-import EcosystemIcon from './icons/IconEcosystem.vue'
-import CommunityIcon from './icons/IconCommunity.vue'
-import SupportIcon from './icons/IconSupport.vue'
+<template>
+  <div class="audio-container">
+    <!-- File Upload Inputs -->
+    <input type="file" @change="handleAudioUpload" accept=".ogg" />
+    <input type="file" @change="handleSubtitleUpload" accept=".json" />
 
-const openReadmeInEditor = () => fetch('/__open-in-editor?file=README.md')
+    <!-- Audio Player -->
+    <audio ref="audioPlayer" controls @play="runSubtitles" @pause="stopSubtitles" v-if="audioUrl">
+      <source :src="audioUrl" type="audio/ogg" />
+      Your browser does not support the audio element.
+    </audio>
+    <!-- <div class="subtitles">
+      <p v-for="(line, index) in displayDialog.dialog" :key="index" v-html="line.text"></p>
+    </div> -->
+    <pre>
+      <div v-html="currentSubtitle"></div>
+    </pre>
+    <!-- <div class="subtitles">
+      
+    </div> -->
+    <!-- Subtitle Display -->
+    <!-- <div class="subtitle" v-if="currentSubtitle">
+      {{ currentSubtitle }}
+    </div> -->
+
+    <!-- Button to Manually Stop Subtitles -->
+    <!-- <button @click="stopSubtitlesManually">Stop Subtitles</button> -->
+  </div>
+</template>
+
+<script>
+
+export default {
+  data() {
+    return {
+      audioUrl: null,
+      subtitles: [],
+      currentSubtitle: "",
+      subtitleTimeouts: [],
+      displayDialog: [],
+      idxTracker: 0,
+      displaySubString: "",
+      idxBr : [],
+    };
+  },
+
+  methods: {
+    handleAudioUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.audioUrl = URL.createObjectURL(file);
+      }
+    },
+    handleSubtitleUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.subtitles = JSON.parse(e.target.result).timestamp;
+          this.displayDialog = JSON.parse(e.target.result);
+          this.audioObject = JSON.parse(e.target.result);
+          // this.audioObject.dialog.forEach(element => {
+          //   this.displaySubString.concat("/n", element.text);
+          // });
+          this.displaySubString = this.audioObject.dialog.map(u => u.text).join("<br>");
+          console.log(this.displaySubString);
+          let pos = this.displaySubString.indexOf("<br>");
+
+          while (pos !== -1) {
+            this.idxBr.push(pos);
+            pos = this.displaySubString.indexOf("<br>", pos + 1);
+          }
+          console.log(this.idxBr);
+        };
+        reader.readAsText(file);
+      }
+    },
+    // runSubtitles() {
+    //   if (!this.subtitles.length) return;
+    //   let currentTime = this.$refs.audioPlayer.currentTime * 1000;
+    //   console.log("currentTime ", currentTime);
+    //   // Stop any running subtitles
+    //   this.stopSubtitles();
+
+    //   this.subtitles.forEach((sub) => {
+    //     const [start, duration, word] = sub;
+    //       const showSubtitle = setTimeout(() => {
+    //         this.currentSubtitle = word;
+    //         console.log("Current Subtitle:", sub); // Log subtitle to console
+    //         // Set another timeout to clear the subtitle after duration
+    //         const hideSubtitle = setTimeout(() => {
+    //           this.currentSubtitle = "";
+    //         }, duration);
+
+    //         this.subtitleTimeouts.push(hideSubtitle);
+    //       }, start);
+
+    //       this.subtitleTimeouts.push(showSubtitle);
+
+    //   });
+
+    // },
+
+    // runSubtitles() {
+    //   if (!this.displayDialog.timestamp.length) return;
+    //   let currentTime = this.$refs.audioPlayer.currentTime * 1000;
+    //   console.log("currentTime ", currentTime);
+    //   // Stop any running subtitles
+    //   this.stopSubtitles();
+
+    //   this.displayDialog.timestamp.forEach((sub) => {
+    //     const [start, duration, word, idx, length] = sub;
+    //       const showSubtitle = setTimeout(() => {
+    //         this.currentSubtitle = word;
+    //         console.log("Current Subtitle:", sub); // Log subtitle to console
+    //         // Set another timeout to clear the subtitle after duration
+    //         const hideSubtitle = setTimeout(() => {
+    //           this.currentSubtitle = "";
+    //         }, duration);
+
+    //         this.subtitleTimeouts.push(hideSubtitle);
+    //       }, start);
+
+    //       this.subtitleTimeouts.push(showSubtitle);
+
+    //   });
+
+    runSubtitles() {
+      this.displayDialog.dialog.forEach(element => {
+        // this.displaySubString.concat("/n", element.text);
+      });
+      // console.log("currentTime ", this.displaySubString);
+      if (!this.displayDialog.timestamp.length) return;
+      let currentTime = this.$refs.audioPlayer.currentTime * 1000;
+      let currentIdx = 0;
+      // console.log("currentTime ", currentTime);
+      // Stop any running subtitles
+      this.stopSubtitles();
+
+      for (let i = 0; i < this.displayDialog.timestamp.length; i++) {
+        const [start, duration, word, idx, length] = this.displayDialog.timestamp[i];
+        currentIdx += length;
+        // Skip subtitles that have already ended
+        if (start + duration < currentTime) {
+          continue;
+        }
+
+        const showSubtitle = setTimeout(() => {
+          // this.currentSubtitle = word;
+          // console.log("Current Subtitle:", word, `(Index: ${idx})`);
+          // Set another timeout to clear the subtitle after duration
+          const hideSubtitle = setTimeout(() => {
+            this.idxTracker = currentIdx.valueOf;
+            this.currentSubtitle = "";
+            // console.log("index Tracker:", this.idxTracker);
+            this.currentSubtitle = this.highlightText(idx, length);
+            console.log(this.currentSubtitle);
+          }, duration);
+
+          this.subtitleTimeouts.push(hideSubtitle);
+        }, Math.max(0, start - currentTime)); // Ensure no negative delay
+
+        this.subtitleTimeouts.push(showSubtitle);
+      }
+
+    },
+
+    stopSubtitles() {
+      // Clear all scheduled subtitle timeouts
+      this.subtitleTimeouts.forEach(clearTimeout);
+      this.subtitleTimeouts = [];
+      // this.currentSubtitle = "";
+    },
+
+    // highlightText(dialogIdx, startIndex, subStringLength) {
+    //   let currentWorkingLine = this.displayDialog.dialog[dialogIdx].text;
+    //   if (startIndex === null || subStringLength === null) return currentWorkingLine;
+    //   const before = currentWorkingLine.slice(0, startIndex - dialogIdx);
+    //   const highlight = currentWorkingLine.slice(startIndex - dialogIdx, startIndex - dialogIdx + subStringLength);
+    //   const after = currentWorkingLine.slice(startIndex - dialogIdx + subStringLength);
+    //   return `${before}<span class='highlight'>${highlight}</span>${after}`;
+    // },
+    highlightText(startIndex, subStringLength) {
+      // let totalBr = 0;
+      let flag = this.idxBr;
+      flag.forEach(e => {
+        if(startIndex > e){
+          startIndex += 3;        
+        }
+      });
+      if (startIndex === null || subStringLength === null) return this.displaySubString;
+      const before = this.displaySubString.slice(0, startIndex);
+      const highlight = this.displaySubString.slice(startIndex, startIndex + subStringLength);
+      const after = this.displaySubString.slice(startIndex+subStringLength);
+      return `${before}<span class='highlight'>${highlight}</span>${after}`;
+    },
+  }
+};
 </script>
 
-<template>
-  <WelcomeItem>
-    <template #icon>
-      <DocumentationIcon />
-    </template>
-    <template #heading>Documentation</template>
+<style scoped>
+.audio-container {
+  text-align: center;
+  margin-top: 20px;
+}
 
-    Vue’s
-    <a href="https://vuejs.org/" target="_blank" rel="noopener">official documentation</a>
-    provides you with all information you need to get started.
-  </WelcomeItem>
+.subtitle {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
 
-  <WelcomeItem>
-    <template #icon>
-      <ToolingIcon />
-    </template>
-    <template #heading>Tooling</template>
+button {
+  margin-top: 10px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-    This project is served and bundled with
-    <a href="https://vite.dev/guide/features.html" target="_blank" rel="noopener">Vite</a>. The
-    recommended IDE setup is
-    <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">VSCode</a>
-    +
-    <a href="https://github.com/johnsoncodehk/volar" target="_blank" rel="noopener">Volar</a>. If
-    you need to test your components and web pages, check out
-    <a href="https://vitest.dev/" target="_blank" rel="noopener">Vitest</a>
-    and
-    <a href="https://www.cypress.io/" target="_blank" rel="noopener">Cypress</a>
-    /
-    <a href="https://playwright.dev/" target="_blank" rel="noopener">Playwright</a>.
 
-    <br />
-
-    More instructions are available in
-    <a href="javascript:void(0)" @click="openReadmeInEditor"><code>README.md</code></a
-    >.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <EcosystemIcon />
-    </template>
-    <template #heading>Ecosystem</template>
-
-    Get official tools and libraries for your project:
-    <a href="https://pinia.vuejs.org/" target="_blank" rel="noopener">Pinia</a>,
-    <a href="https://router.vuejs.org/" target="_blank" rel="noopener">Vue Router</a>,
-    <a href="https://test-utils.vuejs.org/" target="_blank" rel="noopener">Vue Test Utils</a>, and
-    <a href="https://github.com/vuejs/devtools" target="_blank" rel="noopener">Vue Dev Tools</a>. If
-    you need more resources, we suggest paying
-    <a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">Awesome Vue</a>
-    a visit.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <CommunityIcon />
-    </template>
-    <template #heading>Community</template>
-
-    Got stuck? Ask your question on
-    <a href="https://chat.vuejs.org" target="_blank" rel="noopener">Vue Land</a>
-    (our official Discord server), or
-    <a href="https://stackoverflow.com/questions/tagged/vue.js" target="_blank" rel="noopener"
-      >StackOverflow</a
-    >. You should also follow the official
-    <a href="https://bsky.app/profile/vuejs.org" target="_blank" rel="noopener">@vuejs.org</a>
-    Bluesky account or the
-    <a href="https://x.com/vuejs" target="_blank" rel="noopener">@vuejs</a>
-    X account for latest news in the Vue world.
-  </WelcomeItem>
-
-  <WelcomeItem>
-    <template #icon>
-      <SupportIcon />
-    </template>
-    <template #heading>Support Vue</template>
-
-    As an independent project, Vue relies on community backing for its sustainability. You can help
-    us by
-    <a href="https://vuejs.org/sponsor/" target="_blank" rel="noopener">becoming a sponsor</a>.
-  </WelcomeItem>
-</template>
+.highlight {
+  background-color: yellow;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+</style>
