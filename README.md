@@ -32,20 +32,28 @@ npm run dev
 npm run build
 ```
 
-### LOG
-Day1. 
-  Start up project,
-  learn basic components,layout,
-  get a general render layout of the app including audio player and subtitle lines below it (still render as discrete line object)
-  making upload file functional,
-  get the audio player working, 
-  try to use real-time tracking of audio player to match its currentTime with the timestamp of the subtitle json, the tracking interval misses alot and is very inconsistent
-  try to match current working with dicrete dialog objects parsed from json by reIndexing the whole timestamp and calaculate to find where to highlight by mapping from current timestamp to current display dialog line
-Day2.
-  can't make real-time tracking of audio player work because of inconsistent fire interval and hardwave factor,
-  change idea to run subtitle independently using it own timestamp instead with currentTime tracking only use to calculate where to continue highlighting,
-  joinning the whole dialog to 1 single string with html elements for display instead of displaying discrete lines
-  make highlight function that style specific "word" and timeout to fire it in the right time
-  some adjustment to the calculation of when and how long one word is highlighted
-  run test with decent result
-  uploading to github, writting README
+# Project Progress  
+
+## Day 1  
+- Started the project  
+- Learned basic components and layout  
+- Designed the general render layout, including an audio player and subtitle lines (still rendered as discrete line objects)  
+- Implemented file upload functionality  
+- Got the audio player working  
+- Attempted real-time tracking of the audio player to match `currentTime` with subtitle JSON timestamps  
+  - Tracking interval was inconsistent and missed a lot  
+- Tried matching subtitles with discrete dialog objects by reindexing timestamps  
+  - Calculated mappings from the current timestamp to the displayed dialog line for highlighting  
+
+## Day 2  
+- Could not achieve reliable real-time tracking due to inconsistent intervals and hardware limitations  
+- Switched to running subtitles independently using their own timestamps  
+  - `currentTime` tracking now only determines where to continue highlighting  
+- Joined the entire dialog into a single string with HTML elements instead of discrete lines  
+- Implemented a highlight function to style specific words  
+  - Used timeouts to trigger highlights at the correct time  
+- Adjusted calculations for timing and duration of word highlights  
+- Ran tests with decent results  
+- Uploaded the project to GitHub and wrote the README  
+
+[Demo Video](https://youtu.be/JxYszUOaXmU)  
