@@ -31,3 +31,21 @@ npm run dev
 ```sh
 npm run build
 ```
+
+### LOG
+Day1. 
+  Start up project,
+  learn basic components,layout,
+  get a general render layout of the app including audio player and subtitle lines below it (still render as discrete line object)
+  making upload file functional,
+  get the audio player working, 
+  try to use real-time tracking of audio player to match its currentTime with the timestamp of the subtitle json, the tracking interval misses alot and is very inconsistent
+  try to match current working with dicrete dialog objects parsed from json by reIndexing the whole timestamp and calaculate to find where to highlight by mapping from current timestamp to current display dialog line
+Day2.
+  can't make real-time tracking of audio player work because of inconsistent fire interval and hardwave factor,
+  change idea to run subtitle independently using it own timestamp instead with currentTime tracking only use to calculate where to continue highlighting,
+  joinning the whole dialog to 1 single string with html elements for display instead of displaying discrete lines
+  make highlight function that style specific "word" and timeout to fire it in the right time
+  some adjustment to the calculation of when and how long one word is highlighted
+  run test with decent result
+  uploading to github, writting README
