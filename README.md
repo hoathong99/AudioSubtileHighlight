@@ -1,7 +1,8 @@
 
 # Project Progress  
 [Demo Video](https://youtu.be/JxYszUOaXmU) 
-- Fully running with current .ogg file
+![Image](https://github.com/user-attachments/assets/181b6a7a-07a0-4d8b-a638-637156dfa21d)
+- Fully runnable with ogg audio, json subtitle provided
 - Take in ogg audio and json subtitle file from user upload
 - Run substitle word by word, calculate runtime using json timestamp and calculate start time using current audio playtime
 - Able to update subtile on the play to match current audio playtime
