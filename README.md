@@ -1,6 +1,10 @@
 
 # Project Progress  
-
+[Demo Video](https://youtu.be/JxYszUOaXmU) 
+- Fully running with current .ogg file
+- Take in ogg audio and json subtitle file from user upload
+- Run substitle word by word, calculate runtime using json timestamp and calculate start time using current audio playtime
+- Able to update subtile on the play to match current audio playtime
 ## Day 1  
 - Started the project  
 - Learned basic components and layout  
@@ -23,4 +27,5 @@
 - Ran tests with decent results  
 - Uploaded the project to GitHub and wrote the README  
 
-[Demo Video](https://youtu.be/JxYszUOaXmU)  
+
+ 
