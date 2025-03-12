@@ -6,6 +6,7 @@
 - Take in ogg audio and json subtitle file from user upload
 - Run substitle word by word, calculate runtime using json timestamp and calculate start time using current audio playtime
 - Able to update subtile on the play to match current audio playtime
+- example data is stored in public/example data
 ## Day 1  
 - Started the project  
 - Learned basic components and layout  
